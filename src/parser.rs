@@ -1,15 +1,15 @@
 use crate::tokenizer::{Token, Tokenizer};
 use crate::tree::Node;
 
-struct ExpressionParser<'a> {
+pub struct Parser<'a> {
     tokenizer: Tokenizer<'a>,
 }
 
-impl<'a> ExpressionParser<'a> {
-    pub fn new(expression: &str) -> ExpressionParser {
+impl<'a> Parser<'a> {
+    pub fn new(expression: &str) -> Parser {
         let mut tokenizer = Tokenizer::new(expression.chars());
         tokenizer.next_token();
-        ExpressionParser { tokenizer }
+        Parser { tokenizer }
     }
 
     pub fn parse(&mut self) -> Node {
@@ -42,14 +42,20 @@ impl<'a> ExpressionParser<'a> {
     }
 }
 
+pub fn evaluate(expression: &str) -> f64 {
+    let mut parser = Parser::new(expression);
+    let tree = parser.parse();
+    return tree.eval();
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn works() {
-        let mut parser = ExpressionParser::new("10 + 3 - 5");
-        let tree = parser.parse();
-        assert_eq!(tree.eval(), 8.0);
+        assert_eq!(evaluate("10 + 5"), 15.0);
+        assert_eq!(evaluate("15 * 2"), 30.0);
+        assert_eq!(evaluate("15 + 20 - 12"), 23.0);
     }
 }
