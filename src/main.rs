@@ -1,4 +1,5 @@
 mod tokenizer;
+mod tree;
 use tokenizer::{Token, Tokenizer};
 
 fn main() {
