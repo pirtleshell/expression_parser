@@ -1,23 +1,40 @@
-trait Node {
-    fn eval(&self) -> f64;
+use std::f64::NAN;
+
+type F64op = fn(f64, f64) -> f64;
+pub struct Node {
+    value: f64,
+    left: Option::<Box<Node>>,
+    right: Option::<Box<Node>>,
+    op: Option<F64op>,
 }
 
-struct NumberNode { pub number: f64 }
-struct BinaryNode<T: Node, U: Node> {
-    left: T,
-    right: U,
-    op: fn(f64, f64) -> f64,
-}
-
-impl Node for NumberNode {
-    fn eval(&self) -> f64 {
-        self.number
+impl Node {
+    pub fn number(value: f64) -> Node {
+        Node {
+            value,
+            left: None,
+            right: None,
+            op: None,
+        }
     }
-}
 
-impl Node for BinaryNode<NumberNode, NumberNode> {
-    fn eval(&self) -> f64 {
-        (&self.op)(self.left.eval(), self.right.eval())
+    pub fn operation(op: F64op, left: Node, right: Node, ) -> Node {
+        Node {
+            value: NAN,
+            left: Some(Box::new(left)),
+            right: Some(Box::new(right)),
+            op: Some(op),
+        }
+    }
+
+    pub fn eval(&self) -> f64 {
+        match self.op {
+            Some(func) => func(
+                self.left.as_ref().unwrap().eval(),
+                self.right.as_ref().unwrap().eval()
+            ),
+            None => self.value,
+        }
     }
 }
 
@@ -27,11 +44,17 @@ mod test {
 
     #[test]
     fn binary_nodes_eval_correctly() {
-        let tree = BinaryNode {
-            left: NumberNode { number: 10.0 },
-            right: NumberNode { number: 12.0 },
-            op: |x, y| x * y,
-        };
+        // tree for 10 * (5 + 7)
+        let ten = Node::number(10.0);
+        let five = Node::number(5.0);
+        let seven = Node::number(7.0);
+
+        let tree = Node::operation(
+            |x, y| x * y,
+            ten,
+            Node::operation(|x, y| x + y, five, seven)
+        );
+
         assert_eq!(tree.eval(), 120.0);
     }
 }
