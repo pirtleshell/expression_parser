@@ -78,7 +78,7 @@ mod test {
 
     #[test]
     fn parses_tokens() {
-        let mut tokenizer= Tokenizer::new("10 + 6".chars());
+        let mut tokenizer = Tokenizer::new("10 + 6 - 23".chars());
 
         tokenizer.next_token();
         assert_eq!(tokenizer.current_token, Token::Number);
@@ -92,6 +92,21 @@ mod test {
         assert_eq!(tokenizer.number, 6.0);
 
         tokenizer.next_token();
+        assert_eq!(tokenizer.current_token, Token::Subtract);
+
+        tokenizer.next_token();
+        assert_eq!(tokenizer.current_token, Token::Number);
+        assert_eq!(tokenizer.number, 23.0);
+
+        tokenizer.next_token();
         assert_eq!(tokenizer.current_token, Token::EOF);
+    }
+
+    #[test]
+    fn handles_decimals() {
+        let mut tokenizer = Tokenizer::new("42.91".chars());
+        tokenizer.next_token();
+        assert_eq!(tokenizer.current_token, Token::Number);
+        assert_eq!(tokenizer.number, 42.91);
     }
 }
