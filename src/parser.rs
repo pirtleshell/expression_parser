@@ -14,28 +14,40 @@ impl<'a> Parser<'a> {
 
     pub fn evaluate(expression: &str) -> f64 {
         let mut parser = Parser::new(expression);
-        let tree = parser.parse();
+        let tree = parser.parse_addsub();
         return tree.eval();
     }
 
-    pub fn parse(&mut self) -> Node {
-        let mut left = self.parse_unary();
+    pub fn parse_addsub(&mut self) -> Node {
+        let mut left = self.parse_multdiv();
 
         while self.tokenizer.current_token != Token::EOF {
             let op: fn(f64, f64) -> f64 = match self.tokenizer.current_token {
                 Token::Add      => |x, y| x + y,
                 Token::Subtract => |x, y| x - y,
-                Token::Multiply => |x, y| x * y,
-                Token::Divide   => |x, y| x / y,
                 _ => panic!("Invalid parsing token found: {:?}", self.tokenizer.current_token)
             };
 
             self.tokenizer.next_token();
-            let right = self.parse_unary();
+            let right = self.parse_multdiv();
             left = BinaryNode::new(left, right, op);
         }
 
         return left;
+    }
+
+    fn parse_multdiv(&mut self) -> Node {
+        let left = self.parse_unary();
+
+        let op: fn(f64, f64) -> f64 = match self.tokenizer.current_token {
+            Token::Multiply => |x, y| x * y,
+            Token::Divide   => |x, y| x / y,
+            _ => return left
+        };
+
+        self.tokenizer.next_token();
+        let right = self.parse_unary();
+        return BinaryNode::new(left, right, op);
     }
 
     fn parse_unary(&mut self) -> Node {
@@ -73,6 +85,12 @@ mod test {
     #[test]
     fn handles_negatives() {
         assert_eq!(Parser::evaluate("-42"), -42.0);
+        assert_eq!(Parser::evaluate("---42"), -42.0);
         assert_eq!(Parser::evaluate("10 + -100"), -90.0);
+    }
+
+    #[test]
+    fn follows_order_of_operations() {
+        assert_eq!(Parser::evaluate("2 + 20 * 2"), 42.0);
     }
 }
