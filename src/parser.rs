@@ -19,7 +19,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Node {
-        let mut left = self.parse_literal();
+        let mut left = self.parse_unary();
 
         while self.tokenizer.current_token != Token::EOF {
             let op: fn(f64, f64) -> f64 = match self.tokenizer.current_token {
@@ -31,11 +31,21 @@ impl<'a> Parser<'a> {
             };
 
             self.tokenizer.next_token();
-            let right = self.parse_literal();
+            let right = self.parse_unary();
             left = BinaryNode::new(left, right, op);
         }
 
         return left;
+    }
+
+    fn parse_unary(&mut self) -> Node {
+        if self.tokenizer.current_token == Token::Negate {
+            self.tokenizer.next_token();
+            let child = self.parse_unary();
+            return UnaryNode::new(child, |x| -1.0 * x);
+        }
+
+        return self.parse_literal();
     }
 
     fn parse_literal(&mut self) -> Node {
@@ -57,5 +67,12 @@ mod test {
         assert_eq!(Parser::evaluate("10 + 5"), 15.0);
         assert_eq!(Parser::evaluate("15 * 2"), 30.0);
         assert_eq!(Parser::evaluate("15 + 20 - 12"), 23.0);
+        assert_eq!(Parser::evaluate("30.5 + 62"), 92.5);
+    }
+
+    #[test]
+    fn handles_negatives() {
+        assert_eq!(Parser::evaluate("-42"), -42.0);
+        assert_eq!(Parser::evaluate("10 + -100"), -90.0);
     }
 }
