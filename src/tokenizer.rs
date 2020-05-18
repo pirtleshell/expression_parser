@@ -15,6 +15,8 @@ pub enum Token {
     Divide,
     Negate,
     Number,
+    ParenOpen,
+    ParenClose,
 }
 
 pub struct Tokenizer<'a> {
@@ -77,6 +79,8 @@ impl<'a> Tokenizer<'a> {
             '-'  => Token::Subtract,
             '/'  => Token::Divide,
             '*'  => Token::Multiply,
+            '('  => Token::ParenOpen,
+            ')'  => Token::ParenClose,
             _ => panic!("Unexpected character: {}", self.current_char),
         };
         self.number = NAN;

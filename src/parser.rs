@@ -25,7 +25,7 @@ impl<'a> Parser<'a> {
             let op: fn(f64, f64) -> f64 = match self.tokenizer.current_token {
                 Token::Add      => |x, y| x + y,
                 Token::Subtract => |x, y| x - y,
-                _ => panic!("Invalid parsing token found: {:?}", self.tokenizer.current_token)
+                _ => return left
             };
 
             self.tokenizer.next_token();
@@ -61,6 +61,17 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_literal(&mut self) -> Node {
+        if self.tokenizer.current_token == Token::ParenOpen {
+            self.tokenizer.next_token();
+
+            let internal_expression: Node = self.parse_addsub();
+            if self.tokenizer.current_token != Token::ParenClose {
+                panic!("No closing parenthesis found.");
+            }
+            self.tokenizer.next_token();
+            return internal_expression;
+        }
+
         if self.tokenizer.current_token != Token::Number {
             panic!("Unexpected token! {:?}", self.tokenizer.current_token);
         }
@@ -92,5 +103,8 @@ mod test {
     #[test]
     fn follows_order_of_operations() {
         assert_eq!(Parser::evaluate("2 + 20 * 2"), 42.0);
+        assert_eq!(Parser::evaluate("(2 + 20) * 2"), 44.0);
+        assert_eq!(Parser::evaluate("-(10+2)*3"), -36.0);
+        assert_eq!(Parser::evaluate("-(10*2) / 5"), -4.0);
     }
 }
