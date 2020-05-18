@@ -1,5 +1,5 @@
 use crate::tokenizer::{Token, Tokenizer};
-use crate::tree::Node;
+use crate::tree::{Node, Leaf, BinaryNode, UnaryNode, Evaluable};
 
 pub struct Parser<'a> {
     tokenizer: Tokenizer<'a>,
@@ -32,24 +32,19 @@ impl<'a> Parser<'a> {
 
             self.tokenizer.next_token();
             let right = self.parse_literal();
-            left = Node::operation(op, left, right);
+            left = BinaryNode::new(left, right, op);
         }
 
         return left;
     }
 
     fn parse_literal(&mut self) -> Node {
-        let mut sign: f64 = 1.0;
-        while self.tokenizer.current_token == Token::Negate {
-            sign *= -1.0;
-            self.tokenizer.next_token();
-        }
         if self.tokenizer.current_token != Token::Number {
             panic!("Unexpected token! {:?}", self.tokenizer.current_token);
         }
-        let num = sign * self.tokenizer.number;
+        let num = self.tokenizer.number;
         self.tokenizer.next_token();
-        return Node::number(num);
+        return Leaf::new(num);
     }
 }
 

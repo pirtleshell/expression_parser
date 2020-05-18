@@ -1,42 +1,89 @@
-use std::f64::NAN;
-
-type F64op = fn(f64, f64) -> f64;
-pub struct Node {
-    value: f64,
-    left: Option::<Box<Node>>,
-    right: Option::<Box<Node>>,
-    op: Option<F64op>,
+pub enum Node {
+    Leaf(Leaf),
+    Binary(BinaryNode),
+    Unary(UnaryNode),
 }
 
-impl Node {
-    pub fn number(value: f64) -> Node {
-        Node {
-            value,
-            left: None,
-            right: None,
-            op: None,
-        }
-    }
+pub trait Evaluable {
+    fn eval(&self) -> f64;
+}
 
-    pub fn operation(op: F64op, left: Node, right: Node, ) -> Node {
-        Node {
-            value: NAN,
-            left: Some(Box::new(left)),
-            right: Some(Box::new(right)),
-            op: Some(op),
-        }
-    }
-
-    pub fn eval(&self) -> f64 {
-        match self.op {
-            Some(func) => func(
-                self.left.as_ref().unwrap().eval(),
-                self.right.as_ref().unwrap().eval()
-            ),
-            None => self.value,
+impl Evaluable for Node {
+    fn eval(&self) -> f64 {
+        match self {
+            Node::Leaf(node) => node.eval(),
+            Node::Binary(node) => node.eval(),
+            Node::Unary(node) => node.eval(),
         }
     }
 }
+
+// Leaf Nodes
+pub struct Leaf(f64);
+
+impl Evaluable for Leaf {
+    fn eval(&self) -> f64 { self.0 }
+}
+
+impl Leaf {
+    pub fn new(value: f64) -> Node {
+        Node::Leaf(Leaf(value))
+    }
+}
+
+
+// Binary Operation Nodes
+type BinOp = fn(f64, f64) -> f64;
+pub struct BinaryNode {
+    left: Box<Node>,
+    right: Box<Node>,
+    op: BinOp,
+}
+
+impl Evaluable for BinaryNode {
+    fn eval(&self) -> f64 {
+        let op = self.op;
+        op(
+            self.left.as_ref().eval(),
+            self.right.as_ref().eval(),
+        )
+    }
+}
+
+impl BinaryNode {
+    pub fn new(left: Node, right: Node, op: BinOp) -> Node {
+        Node::Binary(BinaryNode {
+            left: Box::new(left),
+            right: Box::new(right),
+            op,
+        })
+    }
+}
+
+
+// Unary Operation Nodes
+type UnOp = fn(f64) -> f64;
+pub struct UnaryNode {
+    child: Box<Node>,
+    op: UnOp,
+}
+
+impl Evaluable for UnaryNode {
+    fn eval(&self) -> f64 {
+        let op = self.op;
+        op(self.child.as_ref().eval())
+    }
+}
+
+impl UnaryNode {
+    pub fn new(child: Node, op: UnOp) -> Node {
+        Node::Unary(UnaryNode {
+            child: Box::new(child),
+            op,
+        })
+    }
+}
+
 
 #[cfg(test)]
 mod test {
@@ -44,17 +91,17 @@ mod test {
 
     #[test]
     fn binary_nodes_eval_correctly() {
-        // tree for 10 * (5 + 7)
-        let ten = Node::number(10.0);
-        let five = Node::number(5.0);
-        let seven = Node::number(7.0);
+        // tree for 10 - 5 + 7
+        let ten = Leaf::new(10.0);
+        let five = Leaf::new(5.0);
+        let seven = Leaf::new(7.0);
 
-        let tree = Node::operation(
-            |x, y| x * y,
+        let tree = BinaryNode::new(
             ten,
-            Node::operation(|x, y| x + y, five, seven)
+            BinaryNode::new(five, seven, |x, y| x + y),
+            |x, y| x - y
         );
 
-        assert_eq!(tree.eval(), 120.0);
+        assert_eq!(tree.eval(), -2.0);
     }
 }
