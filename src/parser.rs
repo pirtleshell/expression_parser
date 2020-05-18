@@ -12,6 +12,12 @@ impl<'a> Parser<'a> {
         Parser { tokenizer }
     }
 
+    pub fn evaluate(expression: &str) -> f64 {
+        let mut parser = Parser::new(expression);
+        let tree = parser.parse();
+        return tree.eval();
+    }
+
     pub fn parse(&mut self) -> Node {
         let mut left = self.parse_literal();
 
@@ -42,20 +48,14 @@ impl<'a> Parser<'a> {
     }
 }
 
-pub fn evaluate(expression: &str) -> f64 {
-    let mut parser = Parser::new(expression);
-    let tree = parser.parse();
-    return tree.eval();
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn works() {
-        assert_eq!(evaluate("10 + 5"), 15.0);
-        assert_eq!(evaluate("15 * 2"), 30.0);
-        assert_eq!(evaluate("15 + 20 - 12"), 23.0);
+        assert_eq!(Parser::evaluate("10 + 5"), 15.0);
+        assert_eq!(Parser::evaluate("15 * 2"), 30.0);
+        assert_eq!(Parser::evaluate("15 + 20 - 12"), 23.0);
     }
 }
