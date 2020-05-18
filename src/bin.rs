@@ -8,6 +8,6 @@ fn main() {
     loop {
         let mut input: String = String::new();
         std::io::stdin().read_line(&mut input).expect("failed to read");
-        println!("{}", Parser::evaluate(&input));
+        println!("> {}", Parser::evaluate(&input));
     }
 }

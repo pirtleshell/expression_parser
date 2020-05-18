@@ -1,5 +1,6 @@
 use std::{
     str::Chars,
+    f64::NAN,
     vec::Vec,
 };
 
@@ -12,6 +13,7 @@ pub enum Token {
     Subtract,
     Multiply,
     Divide,
+    Negate,
     Number,
 }
 
@@ -29,7 +31,7 @@ impl<'a> Tokenizer<'a> {
             current_char: chars.next().unwrap(),
             chars,
             current_token: Token::None,
-            number: 0.0,
+            number: NAN,
         }
     }
 
@@ -43,6 +45,15 @@ impl<'a> Tokenizer<'a> {
         // skip whitespace
         while self.current_char.is_whitespace() {
             self.next_char();
+        }
+
+        // handle negatives
+        // this distinguishes from subtract by knowing that numbers (& therefore negatives)
+        // must always be at the beginning or follow an operator, both cases having self.number = NAN
+        if self.number.is_nan() && self.current_char == '-' {
+            self.current_token = Token::Negate;
+            self.next_char();
+            return;
         }
 
         // handle numbers
@@ -68,6 +79,7 @@ impl<'a> Tokenizer<'a> {
             '*'  => Token::Multiply,
             _ => panic!("Unexpected character: {}", self.current_char),
         };
+        self.number = NAN;
         self.next_char();
     }
 }

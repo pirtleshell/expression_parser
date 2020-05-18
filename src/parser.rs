@@ -39,10 +39,15 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_literal(&mut self) -> Node {
+        let mut sign: f64 = 1.0;
+        while self.tokenizer.current_token == Token::Negate {
+            sign *= -1.0;
+            self.tokenizer.next_token();
+        }
         if self.tokenizer.current_token != Token::Number {
             panic!("Unexpected token! {:?}", self.tokenizer.current_token);
         }
-        let num = self.tokenizer.number;
+        let num = sign * self.tokenizer.number;
         self.tokenizer.next_token();
         return Node::number(num);
     }
